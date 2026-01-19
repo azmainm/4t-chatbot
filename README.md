@@ -1,98 +1,268 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 4T Chatbot - RAG-Powered Multi-Business Chatbot System
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A production-ready NestJS backend for building AI-powered chatbots with Retrieval-Augmented Generation (RAG) using MongoDB Atlas Vector Search and OpenAI.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
+
+- **Semantic Search**: Vector-based retrieval using MongoDB Atlas Vector Search
+- **Multi-Business Support**: Configurable collections and business-specific filtering
+- **RAG Pipeline**: Retrieval-Augmented Generation for accurate, context-aware responses
+- **Modern Stack**: NestJS + TypeScript + LangChain + OpenAI + MongoDB
+- **Production Ready**: Validation, error handling, logging, and health checks
+
+## Architecture
+
+The system consists of two main parts:
+
+1. **Python Preprocessing** (`../chatbot_py_preprocessing/`): Semantic chunking, embedding generation, MongoDB storage
+2. **NestJS API** (this project): Real-time retrieval and chat endpoints
+
+### Tech Stack
+
+- **NestJS**: Backend framework
+- **MongoDB Atlas**: Document + vector storage with vector search index
+- **OpenAI**: Embeddings (`text-embedding-3-small`) and chat (`gpt-4o-mini`)
+- **LangChain**: RAG orchestration utilities
+- **TypeScript**: Type-safe development
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+This chatbot system uses a RAG (Retrieval-Augmented Generation) approach:
 
-## Project setup
+1. User sends a question
+2. System generates query embedding using OpenAI
+3. MongoDB Vector Search finds semantically similar document chunks
+4. System filters results by business ID
+5. Retrieved context + query sent to OpenAI for generation
+6. System returns answer with source citations
 
-```bash
-$ npm install
-```
+## Setup
 
-## Compile and run the project
+### Prerequisites
 
-```bash
-# development
-$ npm run start
+- Node.js 18+
+- MongoDB Atlas cluster with Vector Search enabled
+- OpenAI API key
+- Knowledge base ingested via Python preprocessing pipeline
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
+### Installation
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Deployment
+### Environment Variables
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Create a `.env` file in the root directory:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+```env
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/chatbot
+4T_OPENAI_API_KEY=sk-your-openai-api-key
+PORT=3000
+```
+
+**Important:**
+- MongoDB URI must include `/chatbot` database suffix
+- Use `4T_OPENAI_API_KEY` (not `OPENAI_API_KEY`) for 4Trades businesses
+
+### Vector Search Index
+
+Ensure your MongoDB collection has a vector search index named `vector_index`:
+
+```json
+{
+  "fields": [
+    {
+      "type": "vector",
+      "path": "embedding",
+      "numDimensions": 1536,
+      "similarity": "cosine"
+    },
+    {
+      "type": "filter",
+      "path": "business_id"
+    }
+  ]
+}
+```
+
+## Running the Application
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Development mode with hot reload
+npm run start:dev
+
+# Production mode
+npm run build
+npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Server will start on `http://localhost:3000`
 
-## Resources
+## API Endpoints
 
-Check out a few resources that may come in handy when working with NestJS:
+### POST `/api/chat`
+RAG-powered chatbot endpoint
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+**Request:**
+```json
+{
+  "query": "How much does the AI calling agent cost?",
+  "businessId": "4trades",
+  "topK": 5,
+  "collectionName": "4trades"
+}
+```
 
-## Support
+**Response:**
+```json
+{
+  "answer": "The AI Calling Agent has two pricing plans...",
+  "sources": [
+    {
+      "text": "Base Plan: $100 per month...",
+      "source": "4Trades_Knowledge_Clean.md",
+      "score": 0.89
+    }
+  ],
+  "query": "How much does the AI calling agent cost?",
+  "processingTime": 1234
+}
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### POST `/api/retrieve`
+Direct retrieval endpoint (no generation)
 
-## Stay in touch
+**Request:**
+```json
+{
+  "query": "payment methods",
+  "businessId": "4trades",
+  "topK": 3,
+  "collectionName": "4trades"
+}
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+**Response:**
+```json
+{
+  "chunks": [
+    {
+      "_id": "...",
+      "business_id": "4trades",
+      "text": "Payment gateway supports...",
+      "metadata": {...},
+      "score": 0.92
+    }
+  ],
+  "query": "payment methods",
+  "totalRetrieved": 3,
+  "processingTime": 456
+}
+```
+
+### GET `/api/stats/:businessId/:collectionName`
+Get collection statistics
+
+**Response:**
+```json
+{
+  "collection": "4trades",
+  "businessId": "4trades",
+  "totalDocuments": 31
+}
+```
+
+### GET `/api/health`
+Health check endpoint
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "service": "4T Chatbot RAG System",
+  "timestamp": "2026-01-19T15:30:00.000Z"
+}
+```
+
+## Configuration
+
+Edit `src/config/configuration.ts` to adjust:
+
+- `topK`: Number of chunks to retrieve (default: 5)
+- `numCandidates`: MongoDB vector search candidates (default: 20)
+- `similarityThreshold`: Minimum similarity score (default: 0.7)
+- `embeddingModel`: OpenAI embedding model
+- `chatModel`: OpenAI chat model
+
+## Multi-Business Support
+
+Each business should have:
+- A MongoDB collection (e.g., `4trades`, `business2`)
+- Documents with `business_id` field for filtering
+- Knowledge base preprocessed via Python pipeline
+
+To add a new business:
+1. Preprocess their docs with Python pipeline
+2. Store in collection with their `business_id`
+3. Create vector search index on that collection
+4. Call API with their `businessId` and `collectionName`
+
+## Project Structure
+
+```
+src/
+├── config/
+│   └── configuration.ts       # Environment config
+├── common/
+│   ├── dto/                   # Data transfer objects
+│   └── interfaces/            # TypeScript interfaces
+├── services/
+│   ├── embeddings.service.ts  # OpenAI embeddings
+│   ├── retrieval.service.ts   # Vector search
+│   └── chatbot.service.ts     # RAG orchestration
+├── controllers/
+│   └── chatbot.controller.ts  # API endpoints
+├── app.module.ts              # Main module
+└── main.ts                    # Bootstrap
+```
+
+## Testing
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
+## Documentation
+
+- **Preprocessing Setup**: See `../chatbot_py_preprocessing/README.md`
+- **Architecture**: See `docs/SEMANTIC_SEARCH_ARCHITECTURE.md`
+- **Retrieval Strategy**: See `docs/RETRIEVAL_STRATEGY.md`
+
+## Troubleshooting
+
+**"Vector search index not found"**
+- Create the index in MongoDB Atlas UI
+- Ensure index name is `vector_index`
+- Check dimensions match (1536)
+
+**"No relevant chunks found"**
+- Check `business_id` matches
+- Verify collection has data
+- Try broader queries
+
+**"Failed to generate embedding"**
+- Verify `4T_OPENAI_API_KEY` is set
+- Check OpenAI API quota/limits
+- Ensure API key is valid
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+UNLICENSED - Private project
