@@ -59,7 +59,7 @@ export class ChatbotService {
         .join('\n\n');
 
       // Step 3: Build proper prompt for Responses API
-      const userPrompt = `Answer this question using only the information provided below. Be concise and accurate.
+      const userPrompt = `You are Doug's assistant for 4Trades.ai. Answer the question using ONLY the information provided below. If the information doesn't contain the answer, say "I don't have that information in my knowledge base."
 
 Information:
 ${context}
