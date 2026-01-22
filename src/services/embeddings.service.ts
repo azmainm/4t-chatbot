@@ -12,7 +12,7 @@ export class EmbeddingsService {
     const apiKey = this.configService.get<string>('openai.apiKey');
     
     if (!apiKey) {
-      throw new Error('4T_OPENAI_API_KEY environment variable is required');
+      throw new Error('FOURT_OPENAI_API_KEY (or 4T_OPENAI_API_KEY) environment variable is required');
     }
 
     this.openai = new OpenAI({ apiKey });

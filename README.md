@@ -57,13 +57,14 @@ Create a `.env` file in the root directory:
 
 ```env
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/chatbot
-4T_OPENAI_API_KEY=sk-your-openai-api-key
+FOURT_OPENAI_API_KEY=sk-your-openai-api-key
+# Note: Can also use 4T_OPENAI_API_KEY locally, but Render requires FOURT_OPENAI_API_KEY
 PORT=3000
 ```
 
 **Important:**
 - MongoDB URI must include `/chatbot` database suffix
-- Use `4T_OPENAI_API_KEY` (not `OPENAI_API_KEY`) for 4Trades businesses
+- Use `FOURT_OPENAI_API_KEY` (or `4T_OPENAI_API_KEY` locally) for 4Trades businesses
 
 ### Vector Search Index
 
@@ -259,7 +260,7 @@ npm run test:cov
 - Try broader queries
 
 **"Failed to generate embedding"**
-- Verify `4T_OPENAI_API_KEY` is set
+- Verify `FOURT_OPENAI_API_KEY` is set
 - Check OpenAI API quota/limits
 - Ensure API key is valid
 

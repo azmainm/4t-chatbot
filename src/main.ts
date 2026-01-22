@@ -13,7 +13,15 @@ async function bootstrap() {
   }));
   
   // Enable CORS for frontend integration
-  app.enableCors();
+  app.enableCors({
+    origin: [
+      'http://localhost:3001', // Local development
+      'https://www.4trades.ai', // Production
+      'https://4trades.ai' // Production (without www)
+    ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
   
   const port = process.env.PORT || 3000;
   await app.listen(port);
