@@ -4,6 +4,9 @@ import { OpenAI } from 'openai';
 import { encoding_for_model } from 'tiktoken';
 import { RetrievalService } from './retrieval.service';
 import { ChatResponse } from '../common/interfaces/document.interface';
+import { PRIMEIV_SYSTEM_PROMPT } from '../prompts/primeiv.system';
+import { FOURTRADES_SYSTEM_PROMPT } from '../prompts/fourtrades.system';
+import { PrimeIVGuardrailsService } from './primeiv-guardrails.service';
 
 @Injectable()
 export class ChatbotService {
@@ -14,12 +17,29 @@ export class ChatbotService {
   constructor(
     private configService: ConfigService,
     private retrievalService: RetrievalService,
+    private guardrailsService: PrimeIVGuardrailsService,
   ) {
     const apiKey = this.configService.get<string>('openai.apiKey');
     this.openai = new OpenAI({ apiKey });
     this.chatModel = this.configService.get<string>('openai.chatModel') || 'gpt-4o-mini';
     
     this.logger.log(`Initialized with chat model: ${this.chatModel}`);
+  }
+
+  /**
+   * Get system prompt based on business ID
+   */
+  private getSystemPrompt(businessId: string): string {
+    switch (businessId.toLowerCase()) {
+      case 'primeiv':
+        return PRIMEIV_SYSTEM_PROMPT;
+      case '4trades':
+      case 'fourtrades':
+        return FOURTRADES_SYSTEM_PROMPT;
+      default:
+        this.logger.warn(`Unknown businessId: ${businessId}, using default prompt`);
+        return FOURTRADES_SYSTEM_PROMPT; // Default fallback
+    }
   }
 
   /**
@@ -34,6 +54,20 @@ export class ChatbotService {
     const startTime = Date.now();
 
     try {
+      // Step 0: Apply pre-query guardrails for Prime IV
+      if (businessId.toLowerCase() === 'primeiv') {
+        const preGuardrails = this.guardrailsService.applyGuardrails(query, '');
+        if (preGuardrails.shouldBlock && preGuardrails.modifiedResponse) {
+          this.logger.log(`Pre-query guardrail triggered: ${preGuardrails.reason}`);
+          return {
+            answer: preGuardrails.modifiedResponse,
+            sources: [],
+            query,
+            processingTime: Date.now() - startTime,
+          };
+        }
+      }
+
       // Step 1: Retrieve relevant chunks
       const retrievalResult = await this.retrievalService.retrieveRelevantChunks(
         query,
@@ -52,21 +86,29 @@ export class ChatbotService {
         };
       }
 
-      // Step 2: Build context for GPT-5-nano (Responses API can handle more)
+      // Step 2: Build context from retrieved chunks
       const context = retrievalResult.chunks
-        .slice(0, 3)
-        .map((chunk, idx) => `[${idx + 1}] ${chunk.text.substring(0, 200)}`)
+        .slice(0, 5)
+        .map((chunk, idx) => `[${idx + 1}] ${chunk.text}`)
         .join('\n\n');
 
-      // Step 3: Build proper prompt for Responses API
-      const userPrompt = `You are Doug's assistant for 4Trades.ai. Answer the question using ONLY the information provided below. If the information doesn't contain the answer, say "I don't have that information in my knowledge base."
+      // Step 3: Get business-specific system prompt
+      const systemPrompt = this.getSystemPrompt(businessId);
 
-Information:
+      // Step 4: Build complete prompt
+      const userPrompt = `${systemPrompt}
+
+# RETRIEVED KNOWLEDGE BASE CONTEXT
+
 ${context}
 
-Question: ${query}
+# USER QUESTION
 
-Answer:`;
+${query}
+
+# YOUR RESPONSE
+
+Provide a helpful answer using the context above and following all guidelines:`;
 
       // Count tokens for debugging
       try {
@@ -78,7 +120,7 @@ Answer:`;
         this.logger.warn(`Token counting failed: ${e.message}`);
       }
 
-      // Step 4: Try OpenAI Responses API (new GPT-5 format)
+      // Step 5: Try OpenAI Responses API (new GPT-5 format)
       let completion;
       try {
         // Try new Responses API format
@@ -118,7 +160,16 @@ Answer:`;
         answer = completion.choices[0].message.content || 'Unable to generate response';
       }
 
-      // Step 5: Prepare response with sources
+      // Step 6: Apply post-response guardrails for Prime IV
+      if (businessId.toLowerCase() === 'primeiv') {
+        const postGuardrails = this.guardrailsService.applyGuardrails(query, answer);
+        if (postGuardrails.shouldBlock && postGuardrails.modifiedResponse) {
+          this.logger.log(`Post-response guardrail triggered: ${postGuardrails.reason}`);
+          answer = postGuardrails.modifiedResponse;
+        }
+      }
+
+      // Step 7: Prepare response with sources
       const sources = retrievalResult.chunks.map((chunk) => ({
         text: chunk.text.substring(0, 200) + (chunk.text.length > 200 ? '...' : ''),
         source: chunk.metadata.source || 'Unknown',

@@ -6,6 +6,7 @@ import { ChatbotController } from './controllers/chatbot.controller';
 import { EmbeddingsService } from './services/embeddings.service';
 import { RetrievalService } from './services/retrieval.service';
 import { ChatbotService } from './services/chatbot.service';
+import { PrimeIVGuardrailsService } from './services/primeiv-guardrails.service';
 import configuration from './config/configuration';
 
 @Module({
@@ -16,6 +17,12 @@ import configuration from './config/configuration';
     }),
   ],
   controllers: [AppController, ChatbotController],
-  providers: [AppService, EmbeddingsService, RetrievalService, ChatbotService],
+  providers: [
+    AppService,
+    EmbeddingsService,
+    RetrievalService,
+    ChatbotService,
+    PrimeIVGuardrailsService,
+  ],
 })
 export class AppModule {}
