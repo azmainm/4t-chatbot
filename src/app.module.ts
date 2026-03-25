@@ -6,6 +6,7 @@ import { ChatbotController } from './controllers/chatbot.controller';
 import { EmbeddingsService } from './services/embeddings.service';
 import { RetrievalService } from './services/retrieval.service';
 import { ChatbotService } from './services/chatbot.service';
+import { ReindexService } from './services/reindex.service';
 import { PrimeIVGuardrailsService } from './services/primeiv-guardrails.service';
 import configuration from './config/configuration';
 
@@ -22,6 +23,7 @@ import configuration from './config/configuration';
     EmbeddingsService,
     RetrievalService,
     ChatbotService,
+    ReindexService,
     PrimeIVGuardrailsService,
   ],
 })

@@ -1,13 +1,18 @@
-import { Controller, Post, Body, Get, Param, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query, ValidationPipe, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ChatbotService } from '../services/chatbot.service';
 import { RetrievalService } from '../services/retrieval.service';
+import { ReindexService } from '../services/reindex.service';
 import { ChatQueryDto, RetrieveDto } from '../common/dto/chat.dto';
+import { ReindexDto } from '../common/dto/reindex.dto';
 
 @Controller('api')
 export class ChatbotController {
   constructor(
     private readonly chatbotService: ChatbotService,
     private readonly retrievalService: RetrievalService,
+    private readonly reindexService: ReindexService,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -52,6 +57,25 @@ export class ChatbotController {
     @Param('collectionName') collectionName: string,
   ) {
     return await this.retrievalService.getCollectionStats(collectionName, businessId);
+  }
+
+  /**
+   * POST /api/reindex
+   * Re-embed and upsert document chunks for a business/collection.
+   * Protected by CHATBOT_REINDEX_KEY.
+   */
+  @Post('reindex')
+  async reindex(@Body(ValidationPipe) dto: ReindexDto) {
+    const expectedKey = this.configService.get<string>('CHATBOT_REINDEX_KEY');
+    if (expectedKey && dto.apiKey !== expectedKey) {
+      throw new UnauthorizedException('Invalid reindex API key');
+    }
+
+    return await this.reindexService.reindex(
+      dto.businessId,
+      dto.collectionName,
+      dto.documents,
+    );
   }
 
   /**
