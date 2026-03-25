@@ -15,9 +15,10 @@ async function bootstrap() {
   // Enable CORS for frontend integration
   app.enableCors({
     origin: [
-      'http://localhost:3001', // Local development
-      'https://www.4trades.ai', // Production
-      'https://4trades.ai' // Production (without www)
+      'http://localhost:3001', // 4trades website local dev
+      'http://localhost:4000', // CRM backend local dev
+      'https://www.4trades.ai', // Production website
+      'https://4trades.ai', // Production website (without www)
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
