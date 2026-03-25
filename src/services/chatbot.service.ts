@@ -6,6 +6,7 @@ import { RetrievalService } from './retrieval.service';
 import { ChatResponse } from '../common/interfaces/document.interface';
 import { PRIMEIV_SYSTEM_PROMPT } from '../prompts/primeiv.system';
 import { FOURTRADES_SYSTEM_PROMPT } from '../prompts/fourtrades.system';
+import { CRM_SYSTEM_PROMPT } from '../prompts/crm.system';
 import { PrimeIVGuardrailsService } from './primeiv-guardrails.service';
 
 @Injectable()
@@ -36,6 +37,8 @@ export class ChatbotService {
       case '4trades':
       case 'fourtrades':
         return FOURTRADES_SYSTEM_PROMPT;
+      case 'crm':
+        return CRM_SYSTEM_PROMPT;
       default:
         this.logger.warn(`Unknown businessId: ${businessId}, using default prompt`);
         return FOURTRADES_SYSTEM_PROMPT; // Default fallback
