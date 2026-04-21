@@ -7,7 +7,7 @@ export default () => ({
   openai: {
     apiKey: process.env['FOURT_OPENAI_API_KEY'] || process.env['4T_OPENAI_API_KEY'], // Render doesn't allow vars starting with numbers
     embeddingModel: 'text-embedding-3-small',
-    chatModel: process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini',
+    chatModel: process.env.OPENAI_CHAT_MODEL || 'gpt-5-nano',
     embeddingDimensions: 1536,
   },
   retrieval: {

@@ -79,6 +79,10 @@ export class ChatbotService {
         topK,
       );
 
+      this.logger.log(
+        `Top chunks: ${retrievalResult.chunks.map((c) => `${c.metadata?.source || 'unknown'}(${c.score?.toFixed(3)})`).join(', ')}`,
+      );
+
       if (retrievalResult.chunks.length === 0) {
         this.logger.warn(`No relevant chunks found for query: ${query}`);
         return {
@@ -124,7 +128,7 @@ ${query}`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userMessage },
         ],
-        max_completion_tokens: 300,
+        max_completion_tokens: 4096,
       });
 
       this.logger.log(`Chat Completions finish_reason: ${completion.choices[0].finish_reason}`);
