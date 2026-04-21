@@ -128,7 +128,7 @@ ${query}`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userMessage },
         ],
-        max_completion_tokens: 4096,
+        max_completion_tokens: 1024,
       });
 
       this.logger.log(`Chat Completions finish_reason: ${completion.choices[0].finish_reason}`);
