@@ -98,25 +98,19 @@ export class ChatbotService {
       // Step 3: Get business-specific system prompt
       const systemPrompt = this.getSystemPrompt(businessId);
 
-      // Step 4: Build complete prompt
-      const userPrompt = `${systemPrompt}
-
-# RETRIEVED KNOWLEDGE BASE CONTEXT
+      // Step 4: Build user message (context + question only; system rules go in system role)
+      const userMessage = `# RETRIEVED KNOWLEDGE BASE CONTEXT
 
 ${context}
 
 # USER QUESTION
 
-${query}
-
-# YOUR RESPONSE
-
-Provide a helpful answer using the context above and following all guidelines:`;
+${query}`;
 
       // Count tokens for debugging
       try {
-        const enc = encoding_for_model('gpt-4'); // Use gpt-4 encoding as proxy
-        const tokens = enc.encode(userPrompt);
+        const enc = encoding_for_model('gpt-4');
+        const tokens = enc.encode(systemPrompt + userMessage);
         this.logger.log(`Prompt tokens: ${tokens.length}`);
         enc.free();
       } catch (e) {
@@ -126,24 +120,22 @@ Provide a helpful answer using the context above and following all guidelines:`;
       // Step 5: Try OpenAI Responses API (new GPT-5 format)
       let completion;
       try {
-        // Try new Responses API format
         completion = await (this.openai as any).responses.create({
           model: this.chatModel,
-          input: [
-            { role: 'user', content: userPrompt },
-          ],
+          instructions: systemPrompt,
+          input: [{ role: 'user', content: userMessage }],
           max_output_tokens: 300,
         });
         this.logger.log(`Used Responses API`);
       } catch (e) {
         this.logger.warn(`Responses API failed: ${e.message}, falling back to Chat Completions`);
-        // Fallback to chat completions
         completion = await this.openai.chat.completions.create({
           model: this.chatModel,
           messages: [
-            { role: 'user', content: userPrompt },
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage },
           ],
-          max_completion_tokens: 300,
+          max_tokens: 300,
         });
       }
 
