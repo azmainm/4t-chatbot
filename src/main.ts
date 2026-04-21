@@ -4,7 +4,7 @@ import * as express from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
 
   // Raise body size limit to handle full KB reindex payloads (~300+ chunks)
   app.use(express.json({ limit: '10mb' }));
