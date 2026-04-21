@@ -132,6 +132,7 @@ Provide a helpful answer using the context above and following all guidelines:`;
           input: [
             { role: 'user', content: userPrompt },
           ],
+          max_output_tokens: 300,
         });
         this.logger.log(`Used Responses API`);
       } catch (e) {
@@ -142,7 +143,7 @@ Provide a helpful answer using the context above and following all guidelines:`;
           messages: [
             { role: 'user', content: userPrompt },
           ],
-          max_completion_tokens: 30,
+          max_completion_tokens: 300,
         });
       }
 
