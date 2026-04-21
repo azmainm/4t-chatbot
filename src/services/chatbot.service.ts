@@ -117,44 +117,19 @@ ${query}`;
         this.logger.warn(`Token counting failed: ${e.message}`);
       }
 
-      // Step 5: Try OpenAI Responses API (new GPT-5 format)
-      let completion;
-      try {
-        completion = await (this.openai as any).responses.create({
-          model: this.chatModel,
-          instructions: systemPrompt,
-          input: [{ role: 'user', content: userMessage }],
-          max_output_tokens: 300,
-        });
-        this.logger.log(`Used Responses API`);
-      } catch (e) {
-        this.logger.warn(`Responses API failed: ${e.message}, falling back to Chat Completions`);
-        completion = await this.openai.chat.completions.create({
-          model: this.chatModel,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage },
-          ],
-          max_tokens: 300,
-        });
-      }
+      // Step 5: Generate answer via Chat Completions
+      const completion = await this.openai.chat.completions.create({
+        model: this.chatModel,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage },
+        ],
+        max_completion_tokens: 300,
+      });
 
-      // Extract answer from Responses API format
-      let answer = 'Unable to generate response';
-      
-      if (completion.output) {
-        // Find the message output (not reasoning)
-        const messageOutput = completion.output.find(o => o.type === 'message');
-        if (messageOutput && messageOutput.content) {
-          const textContent = messageOutput.content.find(c => c.type === 'output_text');
-          answer = textContent?.text || 'Unable to generate response';
-          this.logger.log(`Generated answer (${answer.length} chars, ${completion.usage?.output_tokens || 0} tokens)`);
-        }
-      } else if (completion.choices) {
-        // Fallback to Chat Completions format
-        this.logger.log(`Using Chat Completions API (finish_reason: ${completion.choices[0].finish_reason})`);
-        answer = completion.choices[0].message.content || 'Unable to generate response';
-      }
+      this.logger.log(`Chat Completions finish_reason: ${completion.choices[0].finish_reason}`);
+      const answer = completion.choices[0].message.content || 'Unable to generate response';
+      this.logger.log(`Generated answer (${answer.length} chars, ${completion.usage?.completion_tokens || 0} tokens)`);
 
       // Step 6: Apply post-response guardrails for Prime IV
       if (businessId.toLowerCase() === 'primeiv') {
