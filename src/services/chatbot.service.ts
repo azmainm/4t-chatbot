@@ -128,7 +128,7 @@ ${query}`;
       });
 
       this.logger.log(`Chat Completions finish_reason: ${completion.choices[0].finish_reason}`);
-      const answer = completion.choices[0].message.content || 'Unable to generate response';
+      let answer = completion.choices[0].message.content || 'Unable to generate response';
       this.logger.log(`Generated answer (${answer.length} chars, ${completion.usage?.completion_tokens || 0} tokens)`);
 
       // Step 6: Apply post-response guardrails for Prime IV
